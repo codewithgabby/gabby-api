@@ -54,5 +54,3 @@ def root():
     return {"message": "Johnson API is running"}
 
 
-# Rate-limited endpoints (add @limiter.limit decorator to specific routes)
-# We'll apply rate limiting in the router files for targeted control
