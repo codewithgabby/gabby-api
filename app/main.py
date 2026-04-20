@@ -29,6 +29,7 @@ app.add_middleware(
         "http://localhost:8080",      # Common dev port
         "https://yourportfolio.com",  # REPLACE WITH YOUR ACTUAL DOMAIN
         "https://www.yourportfolio.com",
+        "https://gabby-api-production.up.railway.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
