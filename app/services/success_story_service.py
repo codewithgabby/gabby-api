@@ -74,6 +74,7 @@ def update_story(db: Session, story_id: int, data: SuccessStoryUpdate):
 
 
 def delete_story(db: Session, story_id: int):
+    """Soft delete - sets is_published=False"""
     story = db.query(SuccessStory).filter(SuccessStory.id == story_id).first()
     
     if story:
@@ -82,6 +83,18 @@ def delete_story(db: Session, story_id: int):
         db.refresh(story)
     
     return story
+
+
+def hard_delete_story(db: Session, story_id: int):
+    """Hard delete - permanently removes from database"""
+    story = db.query(SuccessStory).filter(SuccessStory.id == story_id).first()
+    
+    if story:
+        db.delete(story)
+        db.commit()
+        return True
+    
+    return False
 
 
 def get_all_stories_admin(db: Session, story_type: str | None = None):

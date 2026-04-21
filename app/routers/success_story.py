@@ -9,7 +9,8 @@ from app.services.success_story_service import (
     get_story_by_id,
     update_story,
     delete_story,
-    get_all_stories_admin
+    get_all_stories_admin,
+    hard_delete_story
 )
 from app.dependencies import verify_admin, get_db
 
@@ -91,10 +92,10 @@ def delete_story_endpoint(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin)
 ):
-    """Admin: Soft delete a success story (sets is_published=False)"""
-    story = delete_story(db, story_id)
+    """Admin: HARD delete a success story (permanently removes from database)"""
+    success = hard_delete_story(db, story_id)
     
-    if not story:
+    if not success:
         raise HTTPException(status_code=404, detail="Success story not found")
     
-    return {"message": f"Success story for '{story.client_name}' unpublished successfully"}
+    return {"message": "Success story permanently deleted"}
