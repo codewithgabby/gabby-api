@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.models.service import Service
 
-from app.schemas.service import ServiceCreate, ServiceResponse
+from app.schemas.service import ServiceCreate, ServiceUpdate, ServiceResponse
 from app.services.service_service import create_service, get_all_services, delete_service
 from app.dependencies import verify_admin, get_db
 
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/services", tags=["Services"])
 
 @router.post("/", response_model=ServiceResponse)
 def create_service_endpoint(
-    data: ServiceCreate, 
+    data: ServiceCreate,
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin)
 ):
@@ -35,18 +35,18 @@ def get_service(service_id: int, db: Session = Depends(get_db)):
 @router.put("/{service_id}", response_model=ServiceResponse)
 def update_service_endpoint(
     service_id: int,
-    data: ServiceCreate,
+    data: ServiceUpdate,
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin)
 ):
-    """Admin: Update a service"""
+    """Admin: Update a service (partial updates allowed)"""
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
     
-    service.name = data.name
-    service.category = data.category
-    service.description = data.description
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(service, field, value)
     
     db.commit()
     db.refresh(service)

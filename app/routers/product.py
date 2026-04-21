@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.models.product import Product
 
-from app.schemas.product import ProductCreate, ProductResponse
+from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse
 from app.services.product_service import create_product, get_all_products, delete_product
 from app.dependencies import verify_admin, get_db
 
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/products", tags=["Products"])
 
 @router.post("/", response_model=ProductResponse)
 def create_product_endpoint(
-    data: ProductCreate, 
+    data: ProductCreate,
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin)
 ):
@@ -35,21 +35,19 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 @router.put("/{product_id}", response_model=ProductResponse)
 def update_product_endpoint(
     product_id: int,
-    data: ProductCreate,
+    data: ProductUpdate,
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin)
 ):
-    """Admin: Update a product"""
+    """Admin: Update a product (partial updates allowed)"""
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    product.name = data.name
-    product.description = data.description
-    product.link = data.link
-    product.type = data.type
-    if data.image_url:
-        product.image_url = str(data.image_url)
+    # Only update fields that were sent
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(product, field, value)
     
     db.commit()
     db.refresh(product)
