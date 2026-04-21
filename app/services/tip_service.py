@@ -44,7 +44,6 @@ def update_tip(db: Session, tip_id: int, data: TipUpdate):
     
     update_data = data.model_dump(exclude_unset=True)
     
-    # Convert enum to string value if category is being updated
     if "category" in update_data and update_data["category"]:
         update_data["category"] = update_data["category"].value
     
@@ -58,17 +57,29 @@ def update_tip(db: Session, tip_id: int, data: TipUpdate):
 
 
 def delete_tip(db: Session, tip_id: int):
+    """Soft delete - sets is_published=False"""
     tip = db.query(Tip).filter(Tip.id == tip_id).first()
     
     if tip:
-        tip.is_published = False  # Soft delete
+        tip.is_published = False
         db.commit()
         db.refresh(tip)
     
     return tip
 
 
-# Admin function to get ALL tips (including unpublished)
+def hard_delete_tip(db: Session, tip_id: int):
+    """Hard delete - permanently removes from database"""
+    tip = db.query(Tip).filter(Tip.id == tip_id).first()
+    
+    if tip:
+        db.delete(tip)
+        db.commit()
+        return True
+    
+    return False
+
+
 def get_all_tips_admin(db: Session, category: str | None = None):
     query = db.query(Tip)
     

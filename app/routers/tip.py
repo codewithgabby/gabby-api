@@ -10,7 +10,8 @@ from app.services.tip_service import (
     get_tip_by_id,
     update_tip,
     delete_tip,
-    get_all_tips_admin
+    get_all_tips_admin,
+    hard_delete_tip
 )
 from app.dependencies import verify_admin, get_db
 
@@ -88,10 +89,10 @@ def delete_tip_endpoint(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin)
 ):
-    """Admin: Soft delete a tip (sets is_published=False)"""
-    tip = delete_tip(db, tip_id)
+    """Admin: HARD delete a tip (permanently removes from database)"""
+    success = hard_delete_tip(db, tip_id)
     
-    if not tip:
+    if not success:
         raise HTTPException(status_code=404, detail="Tip not found")
     
-    return {"message": f"Tip '{tip.title}' unpublished successfully"}
+    return {"message": "Tip permanently deleted"}
