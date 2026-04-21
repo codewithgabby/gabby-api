@@ -1,38 +1,48 @@
-from pydantic import BaseModel, HttpUrl, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime
+from typing import Optional
+
 
 class ProfileUpdate(BaseModel):
-    full_name: str | None = None
-    title: str | None = None
-    bio: str | None = None
-    email: EmailStr | None = None
-    phone: str | None = None
-    location: str | None = None
-    profile_image_url: HttpUrl | None = None
-    linkedin_url: HttpUrl | None = None
-    github_url: HttpUrl | None = None
-    twitter_url: HttpUrl | None = None
-    telegram_url: HttpUrl | None = None
-    whatsapp_url: str | None = None  # wa.me links
-    calendly_url: HttpUrl | None = None
+    full_name: Optional[str] = None
+    title: Optional[str] = None
+    bio: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    profile_image_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+    twitter_url: Optional[str] = None
+    telegram_url: Optional[str] = None
+    whatsapp_url: Optional[str] = None
+    calendly_url: Optional[str] = None
+
+    @field_validator('profile_image_url', 'linkedin_url', 'github_url', 'twitter_url', 'telegram_url', 'calendly_url', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        """Convert empty strings to None for URL fields"""
+        if v == "" or v is None:
+            return None
+        return v
 
 
 class ProfileResponse(BaseModel):
     id: int
     full_name: str
     title: str
-    bio: str | None
-    email: str | None
-    phone: str | None
-    location: str | None
-    profile_image_url: str | None
-    linkedin_url: str | None
-    github_url: str | None
-    twitter_url: str | None
-    telegram_url: str | None
-    whatsapp_url: str | None
-    calendly_url: str | None
-    updated_at: datetime | None
+    bio: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    profile_image_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+    twitter_url: Optional[str] = None
+    telegram_url: Optional[str] = None
+    whatsapp_url: Optional[str] = None
+    calendly_url: Optional[str] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
