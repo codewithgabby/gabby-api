@@ -10,7 +10,8 @@ from app.services.faq_service import (
     get_faq_by_id,
     update_faq,
     delete_faq,
-    get_all_faqs_admin
+    get_all_faqs_admin,
+    hard_delete_faq
 )
 from app.dependencies import verify_admin, get_db
 
@@ -40,6 +41,19 @@ def get_faqs_admin(
 ):
     """Admin: Get all FAQs (including unpublished)"""
     return get_all_faqs_admin(db, category=category)
+
+
+@router.get("/{faq_id}", response_model=FAQResponse)
+def get_faq_by_id_endpoint(
+    faq_id: int,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_admin)
+):
+    """Admin: Get a single FAQ by ID (for editing)"""
+    faq = get_faq_by_id(db, faq_id)
+    if not faq:
+        raise HTTPException(status_code=404, detail="FAQ not found")
+    return faq
 
 
 @router.post("/", response_model=FAQResponse)
@@ -74,10 +88,10 @@ def delete_faq_endpoint(
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin)
 ):
-    """Admin: Soft delete an FAQ (sets is_published=False)"""
-    faq = delete_faq(db, faq_id)
+    """Admin: HARD delete an FAQ (permanently removes from database)"""
+    success = hard_delete_faq(db, faq_id)
     
-    if not faq:
+    if not success:
         raise HTTPException(status_code=404, detail="FAQ not found")
     
-    return {"message": f"FAQ '{faq.question}' unpublished successfully"}
+    return {"message": f"FAQ permanently deleted"}

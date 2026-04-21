@@ -57,6 +57,7 @@ def update_faq(db: Session, faq_id: int, data: FAQUpdate):
 
 
 def delete_faq(db: Session, faq_id: int):
+    """Soft delete - sets is_published=False"""
     faq = db.query(FAQ).filter(FAQ.id == faq_id).first()
     
     if faq:
@@ -65,6 +66,18 @@ def delete_faq(db: Session, faq_id: int):
         db.refresh(faq)
     
     return faq
+
+
+def hard_delete_faq(db: Session, faq_id: int):
+    """Hard delete - permanently removes from database"""
+    faq = db.query(FAQ).filter(FAQ.id == faq_id).first()
+    
+    if faq:
+        db.delete(faq)
+        db.commit()
+        return True
+    
+    return False
 
 
 def get_all_faqs_admin(db: Session, category: str | None = None):
