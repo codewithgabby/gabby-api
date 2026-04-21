@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import Optional
 
@@ -7,7 +7,7 @@ class ProfileUpdate(BaseModel):
     full_name: Optional[str] = None
     title: Optional[str] = None
     bio: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     phone: Optional[str] = None
     location: Optional[str] = None
     profile_image_url: Optional[str] = None
@@ -17,6 +17,14 @@ class ProfileUpdate(BaseModel):
     telegram_url: Optional[str] = None
     whatsapp_url: Optional[str] = None
     calendly_url: Optional[str] = None
+
+    @field_validator('email', mode='before')
+    @classmethod
+    def empty_email_to_none(cls, v):
+        """Convert empty string email to None"""
+        if v == "" or v is None:
+            return None
+        return v
 
     @field_validator('profile_image_url', 'linkedin_url', 'github_url', 'twitter_url', 'telegram_url', 'calendly_url', mode='before')
     @classmethod
