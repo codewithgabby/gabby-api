@@ -54,6 +54,7 @@ app.add_middleware(
         "https://yourportfolio.com",
         "https://www.yourportfolio.com",
         "https://gabby-api-production.up.railway.app",
+        "https://johnsongabriel.netlify.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
