@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from app.models.tip import Tip
 
 from app.schemas.tip import TipCreate, TipUpdate, TipResponse
 from app.services.tip_service import (
@@ -10,7 +11,6 @@ from app.services.tip_service import (
     get_tip_by_id,
     update_tip,
     delete_tip,
-    get_all_tips_admin,
     hard_delete_tip
 )
 from app.dependencies import verify_admin, get_db
@@ -25,10 +25,20 @@ limiter = Limiter(key_func=get_remote_address)
 def get_tips_public(
     request: Request,
     category: str | None = Query(None, description="Filter by: pr, visitor, study, general"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(6, ge=1, le=50, description="Items per page"),
     db: Session = Depends(get_db)
 ):
-    """Public: Get all published tips, optionally filtered by category"""
-    return get_all_tips(db, category=category, published_only=True)
+    """Public: Get published tips with pagination"""
+    query = db.query(Tip).filter(Tip.is_published == True)
+    
+    if category:
+        query = query.filter(Tip.category == category)
+    
+    total = query.count()
+    tips = query.order_by(Tip.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+    
+    return tips
 
 
 @router.get("/{tip_id}", response_model=TipResponse)
@@ -49,12 +59,44 @@ def get_tip_public(tip_id: int, db: Session = Depends(get_db)):
 
 @router.get("/admin/all", response_model=list[TipResponse])
 def get_tips_admin(
-    category: str | None = Query(None, description="Filter by: pr, visitor, study, general"),
+    category: str | None = Query(None, description="Filter by category"),
+    status: str | None = Query(None, description="Filter by status: published, draft"),
+    search: str | None = Query(None, description="Search in title and summary"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=50, description="Items per page"),
     db: Session = Depends(get_db),
     _: str = Depends(verify_admin)
 ):
-    """Admin: Get all tips (including unpublished)"""
-    return get_all_tips_admin(db, category=category)
+    """Admin: Get tips with filtering, search, and pagination"""
+    query = db.query(Tip)
+    
+    # Filter by category
+    if category and category != "all":
+        query = query.filter(Tip.category == category)
+    
+    # Filter by status
+    if status and status != "all":
+        is_published = status == "published"
+        query = query.filter(Tip.is_published == is_published)
+    
+    # Search in title and summary
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            Tip.title.ilike(search_term) | 
+            Tip.summary.ilike(search_term)
+        )
+    
+    # Get total count
+    total = query.count()
+    
+    # Paginate
+    tips = query.order_by(Tip.created_at.desc())\
+        .offset((page - 1) * limit)\
+        .limit(limit)\
+        .all()
+    
+    return tips
 
 
 @router.post("/", response_model=TipResponse)
