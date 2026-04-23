@@ -25,21 +25,30 @@ limiter = Limiter(key_func=get_remote_address)
 def get_tips_public(
     request: Request,
     category: str | None = Query(None, description="Filter by: pr, visitor, study, general"),
+    search: str | None = Query(None, description="Search in title, summary, and content"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(6, ge=1, le=50, description="Items per page"),
     db: Session = Depends(get_db)
 ):
-    """Public: Get published tips with pagination"""
+    """Public: Get published tips with pagination, filtering, and search"""
     query = db.query(Tip).filter(Tip.is_published == True)
     
     if category:
         query = query.filter(Tip.category == category)
     
+    # Search in title, summary, and content
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            Tip.title.ilike(search_term) | 
+            Tip.summary.ilike(search_term) |
+            Tip.content.ilike(search_term)
+        )
+    
     total = query.count()
     tips = query.order_by(Tip.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
     
     return tips
-
 
 @router.get("/{tip_id}", response_model=TipResponse)
 def get_tip_public(tip_id: int, db: Session = Depends(get_db)):
@@ -61,7 +70,7 @@ def get_tip_public(tip_id: int, db: Session = Depends(get_db)):
 def get_tips_admin(
     category: str | None = Query(None, description="Filter by category"),
     status: str | None = Query(None, description="Filter by status: published, draft"),
-    search: str | None = Query(None, description="Search in title and summary"),
+    search: str | None = Query(None, description="Search in title, summary, and content"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(10, ge=1, le=50, description="Items per page"),
     db: Session = Depends(get_db),
