@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.models.product import Product
 
@@ -19,8 +19,32 @@ def create_product_endpoint(
 
 
 @router.get("/", response_model=list[ProductResponse])
-def get_products(db: Session = Depends(get_db)):
-    return get_all_products(db)
+def get_products(
+    search: str | None = Query(None, description="Search in name and description"),
+    type: str | None = Query(None, description="Filter by type: saas, tool, app, physical"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(9, ge=1, le=50, description="Items per page"),
+    db: Session = Depends(get_db)
+):
+    """Public: Get products with pagination, search, and filtering"""
+    query = db.query(Product).filter(Product.is_active == True)
+    
+    if type:
+        query = query.filter(Product.type == type)
+    
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            Product.name.ilike(search_term) | 
+            Product.description.ilike(search_term)
+        )
+    
+    products = query.order_by(Product.created_at.desc())\
+        .offset((page - 1) * limit)\
+        .limit(limit)\
+        .all()
+    
+    return products
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

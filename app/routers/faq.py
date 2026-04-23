@@ -25,11 +25,12 @@ limiter = Limiter(key_func=get_remote_address)
 def get_faqs_public(
     request: Request,
     category: str | None = Query(None, description="Filter by: pr, study, visitor, settlement"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=50, description="Items per page"),
     db: Session = Depends(get_db)
 ):
-    """Public: Get all published FAQs, optionally filtered by category"""
-    return get_all_faqs(db, category=category, published_only=True)
-
+    """Public: Get published FAQs with pagination and filtering"""
+    return get_all_faqs(db, category=category, page=page, limit=limit, published_only=True)
 
 # ADMIN ROUTES
 

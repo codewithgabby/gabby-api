@@ -19,8 +19,7 @@ def create_faq(db: Session, data: FAQCreate):
     
     return new_faq
 
-
-def get_all_faqs(db: Session, category: str | None = None, published_only: bool = True):
+def get_all_faqs(db: Session, category: str | None = None, published_only: bool = True, page: int = 1, limit: int = 10):
     query = db.query(FAQ)
     
     if published_only:
@@ -29,8 +28,10 @@ def get_all_faqs(db: Session, category: str | None = None, published_only: bool 
     if category:
         query = query.filter(FAQ.category == category)
     
-    return query.order_by(FAQ.display_order.asc(), FAQ.created_at.desc()).all()
-
+    return query.order_by(FAQ.display_order.asc(), FAQ.created_at.desc())\
+        .offset((page - 1) * limit)\
+        .limit(limit)\
+        .all()
 
 def get_faq_by_id(db: Session, faq_id: int):
     return db.query(FAQ).filter(FAQ.id == faq_id).first()

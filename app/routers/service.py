@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.models.service import Service
 
@@ -19,8 +19,24 @@ def create_service_endpoint(
 
 
 @router.get("/", response_model=list[ServiceResponse])
-def get_services(db: Session = Depends(get_db)):
-    return get_all_services(db)
+def get_services(
+    category: str | None = Query(None, description="Filter by: immigration, tech, consulting"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(9, ge=1, le=50, description="Items per page"),
+    db: Session = Depends(get_db)
+):
+    """Public: Get services with pagination and filtering"""
+    query = db.query(Service).filter(Service.is_active == True)
+    
+    if category:
+        query = query.filter(Service.category == category)
+    
+    services = query.order_by(Service.created_at.desc())\
+        .offset((page - 1) * limit)\
+        .limit(limit)\
+        .all()
+    
+    return services
 
 
 @router.get("/{service_id}", response_model=ServiceResponse)
