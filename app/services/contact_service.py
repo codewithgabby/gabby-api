@@ -21,7 +21,16 @@ def get_all_contacts(db: Session):
     return db.query(Contact).order_by(Contact.created_at.desc()).all()
 
 
-
+def hard_delete_contact(db: Session, contact_id: int):
+    """Hard delete - permanently removes from database"""
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    
+    if contact:
+        db.delete(contact)
+        db.commit()
+        return True
+    
+    return False
 
 
 

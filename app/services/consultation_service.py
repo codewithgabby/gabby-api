@@ -38,3 +38,14 @@ def update_status(db: Session, consultation_id: int, status: str):
         db.refresh(consultation)
 
     return consultation
+
+def hard_delete_consultation(db: Session, consultation_id: int):
+    """Hard delete - permanently removes from database"""
+    consultation = db.query(Consultation).filter(Consultation.id == consultation_id).first()
+    
+    if consultation:
+        db.delete(consultation)
+        db.commit()
+        return True
+    
+    return False    

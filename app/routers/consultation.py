@@ -11,7 +11,8 @@ from app.schemas.consultation import (
 from app.services.consultation_service import (
     create_consultation,
     get_all_consultations,
-    update_status
+    update_status,
+    hard_delete_consultation
 )
 from app.dependencies import verify_admin, get_db
 
@@ -51,3 +52,17 @@ def update_consultation_status(
         raise HTTPException(status_code=404, detail="Consultation not found")
     
     return consultation
+
+@router.delete("/{consultation_id}")
+def delete_consultation_endpoint(
+    consultation_id: int,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_admin)
+):
+    """Admin: Permanently delete a consultation request"""
+    success = hard_delete_consultation(db, consultation_id)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Consultation not found")
+    
+    return {"message": "Consultation request permanently deleted"}    
