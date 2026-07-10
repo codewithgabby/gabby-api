@@ -9,7 +9,7 @@ from starlette.responses import Response
 from app.db.session import engine
 from app.db.base import Base
 
-from app.routers import consultation, contact, product, service, tip, faq, success_story, profile, upload, redirect
+from app.routers import contact, product, service, tip, faq, success_story, profile, upload, redirect
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -67,7 +67,6 @@ app.add_middleware(
 
 app.include_router(profile.router)
 app.include_router(contact.router)
-app.include_router(consultation.router)
 app.include_router(product.router)
 app.include_router(service.router)
 app.include_router(tip.router)
