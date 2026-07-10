@@ -11,3 +11,4 @@ from app.models.tip import Tip
 from app.models.faq import FAQ
 from app.models.success_story import SuccessStory
 from app.models.profile import Profile
+from app.models.redirect import Redirect
