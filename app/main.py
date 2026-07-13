@@ -17,29 +17,7 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
 
 # ==========================================
-# FORCE HTTPS REDIRECT FIX FOR RAILWAY
-# ==========================================
-
-class ForceHTTPSMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-        if response.status_code in (307, 308) and "location" in response.headers:
-            location = response.headers["location"]
-            if location.startswith("http://"):
-                response.headers["location"] = location.replace("http://", "https://", 1)
-        return response
-
-app.add_middleware(ForceHTTPSMiddleware)
-
-
-# RATE LIMITER
-# ==========================================
-
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
-# ==========================================
-# CORS CONFIGURATION
+# CORS CONFIGURATION — MUST COME FIRST
 # ==========================================
 
 app.add_middleware(
@@ -60,6 +38,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ==========================================
+# FORCE HTTPS REDIRECT FIX FOR RAILWAY
+# ==========================================
+
+class ForceHTTPSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if response.status_code in (307, 308) and "location" in response.headers:
+            location = response.headers["location"]
+            if location.startswith("http://"):
+                response.headers["location"] = location.replace("http://", "https://", 1)
+        return response
+
+app.add_middleware(ForceHTTPSMiddleware)
+
+# ==========================================
+# RATE LIMITER
+# ==========================================
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ==========================================
 # ROUTERS
