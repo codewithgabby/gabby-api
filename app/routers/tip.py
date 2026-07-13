@@ -108,7 +108,7 @@ def get_tips_admin(
     return tips
 
 
-@router.post("", response_model=TipResponse)
+@router.post("/", response_model=TipResponse)
 def create_tip_endpoint(
     data: TipCreate,
     db: Session = Depends(get_db),
