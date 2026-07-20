@@ -224,6 +224,20 @@ def get_redirects_admin(
     """Admin: Get all redirects with pagination"""
     return get_all_redirects(db, page=page, limit=limit)
 
+@router.get("/admin/redirects/{redirect_id}", response_model=RedirectResponse)
+def get_redirect_admin(
+    redirect_id: int,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_admin)
+):
+    """Admin: Get a single redirect by ID"""
+    redirect = get_redirect_by_id(db, redirect_id)
+    
+    if not redirect:
+        raise HTTPException(status_code=404, detail="Redirect not found")
+    
+    return redirect    
+
 
 @router.post("/admin/redirects", response_model=RedirectResponse)
 def create_redirect_endpoint(
